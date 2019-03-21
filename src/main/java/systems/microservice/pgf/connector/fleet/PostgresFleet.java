@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package systems.microservice.pgf.connector;
+package systems.microservice.pgf.connector.fleet;
 
 import java.net.URL;
 import java.util.Iterator;
