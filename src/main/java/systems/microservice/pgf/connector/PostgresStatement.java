@@ -1,8 +1,331 @@
+/*
+ * Copyright (C) 2019 Microservice Systems, Inc.
+ * All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package systems.microservice.pgf.connector;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
+import org.postgresql.PGStatement;
+import org.postgresql.core.BaseStatement;
 
 /**
  * @author Dmitry Kotlyarov
  * @since 1.0
  */
-public class PostgresStatement {
+public final class PostgresStatement implements Statement, PGStatement {
+    private final PostgresConnection connection;
+    private final BaseStatement base;
+
+    public PostgresStatement(PostgresConnection connection) throws SQLException {
+        this.connection = connection;
+        this.base = (BaseStatement) connection.getBase().createStatement();
+    }
+
+    @Override
+    public PostgresConnection getConnection() {
+        return connection;
+    }
+
+    public BaseStatement getBase() {
+        return base;
+    }
+
+    @Override
+    public ResultSet executeQuery(String sql) throws SQLException {
+        return base.executeQuery(sql);
+    }
+
+    @Override
+    public int executeUpdate(String sql) throws SQLException {
+        return base.executeUpdate(sql);
+    }
+
+    @Override
+    public void close() throws SQLException {
+        base.close();
+    }
+
+    @Override
+    public int getMaxFieldSize() throws SQLException {
+        return base.getMaxFieldSize();
+    }
+
+    @Override
+    public void setMaxFieldSize(int max) throws SQLException {
+        base.setMaxFieldSize(max);
+    }
+
+    @Override
+    public int getMaxRows() throws SQLException {
+        return base.getMaxRows();
+    }
+
+    @Override
+    public void setMaxRows(int max) throws SQLException {
+        base.setMaxRows(max);
+    }
+
+    @Override
+    public void setEscapeProcessing(boolean enable) throws SQLException {
+        base.setEscapeProcessing(enable);
+    }
+
+    @Override
+    public int getQueryTimeout() throws SQLException {
+        return base.getQueryTimeout();
+    }
+
+    @Override
+    public void setQueryTimeout(int seconds) throws SQLException {
+        base.setQueryTimeout(seconds);
+    }
+
+    @Override
+    public void cancel() throws SQLException {
+        base.cancel();
+    }
+
+    @Override
+    public SQLWarning getWarnings() throws SQLException {
+        return base.getWarnings();
+    }
+
+    @Override
+    public void clearWarnings() throws SQLException {
+        base.clearWarnings();
+    }
+
+    @Override
+    public void setCursorName(String name) throws SQLException {
+        base.setCursorName(name);
+    }
+
+    @Override
+    public boolean execute(String sql) throws SQLException {
+        return base.execute(sql);
+    }
+
+    @Override
+    public ResultSet getResultSet() throws SQLException {
+        return base.getResultSet();
+    }
+
+    @Override
+    public int getUpdateCount() throws SQLException {
+        return base.getUpdateCount();
+    }
+
+    @Override
+    public boolean getMoreResults() throws SQLException {
+        return base.getMoreResults();
+    }
+
+    @Override
+    public void setFetchDirection(int direction) throws SQLException {
+        base.setFetchDirection(direction);
+    }
+
+    @Override
+    public int getFetchDirection() throws SQLException {
+        return base.getFetchDirection();
+    }
+
+    @Override
+    public void setFetchSize(int rows) throws SQLException {
+        base.setFetchSize(rows);
+    }
+
+    @Override
+    public int getFetchSize() throws SQLException {
+        return base.getFetchSize();
+    }
+
+    @Override
+    public int getResultSetConcurrency() throws SQLException {
+        return base.getResultSetConcurrency();
+    }
+
+    @Override
+    public int getResultSetType() throws SQLException {
+        return base.getResultSetType();
+    }
+
+    @Override
+    public void addBatch(String sql) throws SQLException {
+        base.addBatch(sql);
+    }
+
+    @Override
+    public void clearBatch() throws SQLException {
+        base.clearBatch();
+    }
+
+    @Override
+    public int[] executeBatch() throws SQLException {
+        return base.executeBatch();
+    }
+
+    @Override
+    public boolean getMoreResults(int current) throws SQLException {
+        return base.getMoreResults(current);
+    }
+
+    @Override
+    public ResultSet getGeneratedKeys() throws SQLException {
+        return base.getGeneratedKeys();
+    }
+
+    @Override
+    public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+        return base.executeUpdate(sql, autoGeneratedKeys);
+    }
+
+    @Override
+    public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
+        return base.executeUpdate(sql, columnIndexes);
+    }
+
+    @Override
+    public int executeUpdate(String sql, String[] columnNames) throws SQLException {
+        return base.executeUpdate(sql, columnNames);
+    }
+
+    @Override
+    public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
+        return base.execute(sql, autoGeneratedKeys);
+    }
+
+    @Override
+    public boolean execute(String sql, int[] columnIndexes) throws SQLException {
+        return base.execute(sql, columnIndexes);
+    }
+
+    @Override
+    public boolean execute(String sql, String[] columnNames) throws SQLException {
+        return base.execute(sql, columnNames);
+    }
+
+    @Override
+    public int getResultSetHoldability() throws SQLException {
+        return base.getResultSetHoldability();
+    }
+
+    @Override
+    public boolean isClosed() throws SQLException {
+        return base.isClosed();
+    }
+
+    @Override
+    public void setPoolable(boolean poolable) throws SQLException {
+        base.setPoolable(poolable);
+    }
+
+    @Override
+    public boolean isPoolable() throws SQLException {
+        return base.isPoolable();
+    }
+
+    @Override
+    public void closeOnCompletion() throws SQLException {
+        base.closeOnCompletion();
+    }
+
+    @Override
+    public boolean isCloseOnCompletion() throws SQLException {
+        return base.isCloseOnCompletion();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        if (iface.isAssignableFrom(getClass())) {
+            return iface.cast(this);
+        }
+        throw new SQLException("Cannot unwrap to " + iface.getName());
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return iface.isAssignableFrom(getClass());
+    }
+
+    @Override
+    public long getLastOID() throws SQLException {
+        return base.getLastOID();
+    }
+
+    @Override
+    public void setUseServerPrepare(boolean flag) throws SQLException {
+        base.setUseServerPrepare(flag);
+    }
+
+    @Override
+    public boolean isUseServerPrepare() {
+        return base.isUseServerPrepare();
+    }
+
+    @Override
+    public void setPrepareThreshold(int threshold) throws SQLException {
+        base.setPrepareThreshold(threshold);
+    }
+
+    @Override
+    public int getPrepareThreshold() {
+        return base.getPrepareThreshold();
+    }
+
+    @Override
+    public long getLargeUpdateCount() throws SQLException {
+        return base.getLargeUpdateCount();
+    }
+
+    @Override
+    public void setLargeMaxRows(long max) throws SQLException {
+        base.setLargeMaxRows(max);
+    }
+
+    @Override
+    public long getLargeMaxRows() throws SQLException {
+        return base.getLargeMaxRows();
+    }
+
+    @Override
+    public long[] executeLargeBatch() throws SQLException {
+        return base.executeLargeBatch();
+    }
+
+    @Override
+    public long executeLargeUpdate(String sql) throws SQLException {
+        return base.executeLargeUpdate(sql);
+    }
+
+    @Override
+    public long executeLargeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+        return base.executeLargeUpdate(sql, autoGeneratedKeys);
+    }
+
+    @Override
+    public long executeLargeUpdate(String sql, int[] columnIndexes) throws SQLException {
+        return base.executeLargeUpdate(sql, columnIndexes);
+    }
+
+    @Override
+    public long executeLargeUpdate(String sql, String[] columnNames) throws SQLException {
+        return base.executeLargeUpdate(sql, columnNames);
+    }
 }
