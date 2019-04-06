@@ -20,11 +20,16 @@ package systems.microservice.pgf.connector;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.sql.DataSource;
 import org.postgresql.Driver;
 import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
@@ -34,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @author Dmitry Kotlyarov
  * @since 1.0
  */
-public final class PostgresConnector {
+public final class PostgresConnector implements DataSource {
     private final String id;
     private final UUID uuid;
     private final Driver driver;
@@ -83,15 +88,172 @@ public final class PostgresConnector {
         this.connectionFactories = new ConnectionFactory[size];
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public Driver getDriver() {
+        return driver;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public Properties getProperties() {
+        return properties;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public long getIdle() {
+        return idle;
+    }
+
+    public long getTouchTime() {
+        return touchTime.get();
+    }
+
+    public boolean isClosed() {
+        return closed.get();
+    }
+
+    public Logger getLogger() {
+        return logger;
+    }
+
+    public Counter getErrorCounter() {
+        return errorCounter;
+    }
+
+    public Counter getExceptionCounter() {
+        return exceptionCounter;
+    }
+
+    public Timer getConnectorTimer() {
+        return connectorTimer;
+    }
+
+    public Timer getConnectionTimer() {
+        return connectionTimer;
+    }
+
+    public Timer getTransactionTimer() {
+        return transactionTimer;
+    }
+
+    public Timer getStatementTimer() {
+        return statementTimer;
+    }
+
+    public Timer getPreparedStatementTimer() {
+        return preparedStatementTimer;
+    }
+
+    public Timer getCallableStatementTimer() {
+        return callableStatementTimer;
+    }
+
+    public Timer getResultSetTimer() {
+        return resultSetTimer;
+    }
+
+    @Override
+    public PostgresConnection getConnection() throws SQLException {
+        return null;
+    }
+
+    @Override
+    public PostgresConnection getConnection(String username, String password) throws SQLException {
+        return null;
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        if (iface.isAssignableFrom(getClass())) {
+            return iface.cast(this);
+        }
+        throw new SQLException("Cannot unwrap to " + iface.getName());
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return iface.isAssignableFrom(getClass());
+    }
+
+    @Override
+    public PrintWriter getLogWriter() throws SQLException {
+        return null;
+    }
+
+    @Override
+    public void setLogWriter(PrintWriter out) throws SQLException {
+
+    }
+
+    @Override
+    public void setLoginTimeout(int seconds) throws SQLException {
+
+    }
+
+    @Override
+    public int getLoginTimeout() throws SQLException {
+        return 0;
+    }
+
+    @Override
+    public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        return null;
+    }
+
     private static final class ConnectionFactory {
         private final PostgresConnector connector;
         private final AtomicBoolean ready;
         private final AtomicReference<BaseConnection> base;
 
-        public ConnectionFactory(PostgresConnector connector) {
+        public ConnectionFactory(PostgresConnector connector) throws SQLException {
             this.connector = connector;
             this.ready = new AtomicBoolean(true);
-            this.base = new AtomicReference<>(null);
+            this.base = new AtomicReference<>(connect());
+        }
+
+        public BaseConnection open() throws SQLException {
+            BaseConnection b = base.get();
+            if (b == null) {
+                b = connect();
+                base.set(b);
+                return b;
+            } else {
+                return b;
+            }
+        }
+
+        public BaseConnection close() {
+            BaseConnection b = base.get();
+            if (b != null) {
+                try {
+                    b.close();
+                } catch (Throwable e) {
+                }
+                base.set(null);
+                return b;
+            } else {
+                return null;
+            }
+        }
+
+        private BaseConnection connect() throws SQLException {
+            return (BaseConnection) connector.getDriver().connect(connector.getUrl(), connector.getProperties());
         }
     }
 }
