@@ -21,17 +21,14 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import java.io.PrintWriter;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.DataSource;
 import org.postgresql.Driver;
-import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +37,8 @@ import org.slf4j.LoggerFactory;
  * @since 1.0
  */
 public final class PostgresConnector implements DataSource {
-    private final String id;
-    private final UUID uuid;
+    private final UUID id;
+    private final String name;
     private final Driver driver;
     private final String url;
     private final Properties properties;
@@ -63,9 +60,9 @@ public final class PostgresConnector implements DataSource {
     private final ThreadLocal<PostgresConnection> threadConnection;
     private final PostgresConnectionFactory[] connectionFactories;
 
-    public PostgresConnector(String id, String url, Properties properties, int size, boolean readOnly, long idle) {
-        this.id = id;
-        this.uuid = UUID.randomUUID();
+    public PostgresConnector(String name, String url, Properties properties, int size, boolean readOnly, long idle) {
+        this.id = UUID.randomUUID();
+        this.name = name;
         this.driver = new Driver();
         this.url = url;
         this.properties = properties;
@@ -74,26 +71,26 @@ public final class PostgresConnector implements DataSource {
         this.idle = idle;
         this.touchTime = new AtomicLong(System.currentTimeMillis());
         this.closed = new AtomicBoolean(false);
-        this.logger = LoggerFactory.getLogger(String.format("%s.%s", PostgresConnector.class.getName(), id));
-        this.errorCounter = Metrics.counter(String.format("%s.%s.errorCounter", PostgresConnector.class.getName(), id));
-        this.exceptionCounter = Metrics.counter(String.format("%s.%s.exceptionCounter", PostgresConnector.class.getName(), id));
-        this.connectorTimer = Metrics.timer(String.format("%s.%s.connectorTimer", PostgresConnector.class.getName(), id));
-        this.connectionTimer = Metrics.timer(String.format("%s.%s.connectionTimer", PostgresConnector.class.getName(), id));
-        this.transactionTimer = Metrics.timer(String.format("%s.%s.transactionTimer", PostgresConnector.class.getName(), id));
-        this.statementTimer = Metrics.timer(String.format("%s.%s.statementTimer", PostgresConnector.class.getName(), id));
-        this.preparedStatementTimer = Metrics.timer(String.format("%s.%s.preparedStatementTimer", PostgresConnector.class.getName(), id));
-        this.callableStatementTimer = Metrics.timer(String.format("%s.%s.callableStatementTimer", PostgresConnector.class.getName(), id));
-        this.resultSetTimer = Metrics.timer(String.format("%s.%s.resultSetTimer", PostgresConnector.class.getName(), id));
+        this.logger = LoggerFactory.getLogger(String.format("%s.%s", PostgresConnector.class.getName(), name));
+        this.errorCounter = Metrics.counter(String.format("%s.%s.errorCounter", PostgresConnector.class.getName(), name));
+        this.exceptionCounter = Metrics.counter(String.format("%s.%s.exceptionCounter", PostgresConnector.class.getName(), name));
+        this.connectorTimer = Metrics.timer(String.format("%s.%s.connectorTimer", PostgresConnector.class.getName(), name));
+        this.connectionTimer = Metrics.timer(String.format("%s.%s.connectionTimer", PostgresConnector.class.getName(), name));
+        this.transactionTimer = Metrics.timer(String.format("%s.%s.transactionTimer", PostgresConnector.class.getName(), name));
+        this.statementTimer = Metrics.timer(String.format("%s.%s.statementTimer", PostgresConnector.class.getName(), name));
+        this.preparedStatementTimer = Metrics.timer(String.format("%s.%s.preparedStatementTimer", PostgresConnector.class.getName(), name));
+        this.callableStatementTimer = Metrics.timer(String.format("%s.%s.callableStatementTimer", PostgresConnector.class.getName(), name));
+        this.resultSetTimer = Metrics.timer(String.format("%s.%s.resultSetTimer", PostgresConnector.class.getName(), name));
         this.threadConnection = new ThreadLocal<>();
         this.connectionFactories = new PostgresConnectionFactory[size];
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public UUID getUuid() {
-        return uuid;
+    public String getName() {
+        return name;
     }
 
     public Driver getDriver() {
