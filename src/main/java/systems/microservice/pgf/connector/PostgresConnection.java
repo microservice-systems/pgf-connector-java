@@ -35,8 +35,6 @@ import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.postgresql.PGConnection;
 import org.postgresql.PGNotification;
 import org.postgresql.copy.CopyManager;
@@ -54,25 +52,25 @@ import org.postgresql.util.PGobject;
  */
 public final class PostgresConnection implements Connection, PGConnection {
     private final PostgresConnector connector;
-    private final AtomicBoolean ready;
-    private final AtomicReference<BaseConnection> base;
+    private final PostgresConnectionFactory factory;
+    private final BaseConnection base;
 
-    PostgresConnection(PostgresConnector connector) {
+    PostgresConnection(PostgresConnector connector, PostgresConnectionFactory factory, BaseConnection base) {
         this.connector = connector;
-        this.ready = new AtomicBoolean(true);
-        this.base = new AtomicReference<>(null);
+        this.factory = factory;
+        this.base = base;
     }
 
     public PostgresConnector getConnector() {
         return connector;
     }
 
-    public boolean isReady() {
-        return ready.get();
+    public PostgresConnectionFactory getFactory() {
+        return factory;
     }
 
     public BaseConnection getBase() {
-        return base.get();
+        return base;
     }
 
     @Override
