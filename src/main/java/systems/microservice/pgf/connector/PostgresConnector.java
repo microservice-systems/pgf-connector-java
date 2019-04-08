@@ -61,7 +61,7 @@ public final class PostgresConnector implements DataSource {
     private final Timer callableStatementTimer;
     private final Timer resultSetTimer;
     private final ThreadLocal<PostgresConnection> threadConnection;
-    private final ConnectionFactory[] connectionFactories;
+    private final PostgresConnectionFactory[] connectionFactories;
 
     public PostgresConnector(String id, String url, Properties properties, int size, boolean readOnly, long idle) {
         this.id = id;
@@ -85,7 +85,7 @@ public final class PostgresConnector implements DataSource {
         this.callableStatementTimer = Metrics.timer(String.format("%s.%s.callableStatementTimer", PostgresConnector.class.getName(), id));
         this.resultSetTimer = Metrics.timer(String.format("%s.%s.resultSetTimer", PostgresConnector.class.getName(), id));
         this.threadConnection = new ThreadLocal<>();
-        this.connectionFactories = new ConnectionFactory[size];
+        this.connectionFactories = new PostgresConnectionFactory[size];
     }
 
     public String getId() {
@@ -214,46 +214,5 @@ public final class PostgresConnector implements DataSource {
     @Override
     public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
         return null;
-    }
-
-    private static final class ConnectionFactory {
-        private final PostgresConnector connector;
-        private final AtomicBoolean ready;
-        private final AtomicReference<BaseConnection> base;
-
-        public ConnectionFactory(PostgresConnector connector) throws SQLException {
-            this.connector = connector;
-            this.ready = new AtomicBoolean(true);
-            this.base = new AtomicReference<>(connect());
-        }
-
-        public BaseConnection open() throws SQLException {
-            BaseConnection b = base.get();
-            if (b == null) {
-                b = connect();
-                base.set(b);
-                return b;
-            } else {
-                return b;
-            }
-        }
-
-        public BaseConnection close() {
-            BaseConnection b = base.get();
-            if (b != null) {
-                try {
-                    b.close();
-                } catch (Throwable e) {
-                }
-                base.set(null);
-                return b;
-            } else {
-                return null;
-            }
-        }
-
-        private BaseConnection connect() throws SQLException {
-            return (BaseConnection) connector.getDriver().connect(connector.getUrl(), connector.getProperties());
-        }
     }
 }
