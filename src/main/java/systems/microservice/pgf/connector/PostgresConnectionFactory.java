@@ -49,8 +49,26 @@ public final class PostgresConnectionFactory {
         return ready.get();
     }
 
-    public PostgresConnection createConnection() {
-        return null;
+    public PostgresConnection createConnection() throws SQLException {
+        if (!connector.isClosed() && ready.compareAndSet(true, false)) {
+            try {
+                BaseConnection b = base.get();
+                if ((b == null) || b.isClosed() || !b.isValid(10)) {
+                    b = connect();
+                    base.set(b);
+                }
+                b.setReadOnly(false);
+                return new PostgresConnection(connector, this, b);
+            } catch (SQLException | RuntimeException | Error e) {
+                ready.set(true);
+                throw e;
+            } catch (Throwable e) {
+                ready.set(true);
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
     }
 
     public BaseConnection close() {
